@@ -97,7 +97,7 @@ const HomePage = () => {
         
             sub = await reg.pushManager.subscribe({
                 userVisibleOnly: true,
-                applicationServerKey: vapidPublicKey.publicVapidKey,
+                applicationServerKey: vapidPublicKey.publicKey,
             });
 
             let subscription = await fetch("/saveSubscription", {
