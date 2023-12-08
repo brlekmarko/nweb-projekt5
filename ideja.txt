@@ -1,0 +1,7 @@
+1. native api - kamera - korisnik uslika pa mu pretvori sliku u crno bijelu i nudi mu download
+2. installable - okej
+3. cache strategija - cache first - imamo neke pozadinske slike koje su spremljene u cache, ako nisu, server
+4. offline rad - pretvaranje slika u crnobijele ce radit i offline, jedino mozda pozadinske slike se nece loadati
+5. background sync - ako je korisnik probao dohvatiti pozadinske slike, ali je offline, slike ce se dohvatiti kada dobije konekciju i spremiti u cache
+6. push notifikacija - nakon sto se zavrsi bg sync
+7. progressive enhancement - ako korisnikov browser ne podrzava service workere, offline rad nece biti moguc ali ce normalno raditi online
