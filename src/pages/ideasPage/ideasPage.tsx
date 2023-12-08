@@ -3,7 +3,10 @@ import './ideasPage.css';
 const IdeasPage = () => {
     return (
         <div>
-            <h1>Here are some black and white pictures you can try to recreate</h1>
+            <div className="text-center">
+                <h1 style={{textAlign: 'center'}}>Here are some black and white pictures you can try to recreate</h1>
+                <h1 style={{textAlign: 'center'}}><a href="/">Home</a></h1>
+            </div>
 
             <div className="ideas">
 
