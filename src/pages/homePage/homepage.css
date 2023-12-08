@@ -57,4 +57,5 @@ html{
     align-items: center;
     width: 100%;
     margin-bottom: 50px;
+    flex-direction: column;
 }

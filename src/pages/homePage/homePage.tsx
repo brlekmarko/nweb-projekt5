@@ -61,7 +61,6 @@ const HomePage = () => {
         <div>
             <div className="text-center">
                 <h1 style={{textAlign: 'center'}}>Take a picture using your camera and it will be transformed using the black and white filter</h1>
-                <br/>
                 <h1 style={{textAlign: 'center'}}>You can get some cool ideas from <a href="/ideas">here</a></h1>
             </div>
             <div className='bothImages'>

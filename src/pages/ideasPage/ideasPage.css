@@ -1,0 +1,7 @@
+.ideas div{
+    display: flex;
+    justify-content: space-evenly;
+    align-items: center;
+    flex-wrap: nowrap;
+    margin: 10px;
+}
