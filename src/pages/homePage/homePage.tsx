@@ -1,7 +1,8 @@
 import './homePage.css';
 import Webcam from "react-webcam";
-import { useCallback, useRef, useState } from 'react';
-import { transform } from 'typescript';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import axios from 'axios';
+import { askForNotificationPermission } from '../../service-worker';
 
 
 const HomePage = () => {
@@ -9,12 +10,14 @@ const HomePage = () => {
     const webcamRef = useRef<Webcam | null>(null);
     const [imageOriginal, setImageOriginal] = useState<string | null>(null);
     const [imageTransformed, setImageTransformed] = useState<string | null>(null);
+    const [numberOfPictures, setNumberOfPictures] = useState<number>(0);
 
     const capture = useCallback(() => {
         if (webcamRef.current) {
             const imageSrc = (webcamRef.current as Webcam).getScreenshot() as string;
             setImageOriginal(imageSrc);
             transformImage(imageSrc);
+            axios.post("/incrementNumberOfPictures");
         }
     }, [webcamRef]);
 
@@ -57,11 +60,19 @@ const HomePage = () => {
         document.body.removeChild(link);
     }
 
+    useEffect(() => {
+        axios.get("/numberOfPictures").then(res => {
+            setNumberOfPictures(res.data.numOfPictures);
+        });
+    }, []);
+
     return(
         <div>
             <div className="text-center">
                 <h1 style={{textAlign: 'center'}}>Take a picture using your camera and it will be transformed using the black and white filter</h1>
                 <h1 style={{textAlign: 'center'}}>You can get some cool ideas from <a href="/ideas">here</a></h1>
+                <h1 style={{textAlign: 'center'}}>Number of pictures taken globally: {numberOfPictures}</h1>
+                <h1 style={{textAlign: 'center'}}>Subscribe to notifications to get notified when someone takes a picture <button className="button" onClick={askForNotificationPermission}>Subscribe</button></h1>
             </div>
             <div className='bothImages'>
 

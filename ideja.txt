@@ -1,7 +1,7 @@
-1. native api - kamera - korisnik uslika pa mu pretvori sliku u crno bijelu i nudi mu download
+1. native api - kamera - korisnik uslika pa mu pretvori sliku u crno bijelu i nudi mu download, server biljezi broj ukupnih pretvorbi svih klijenata
 2. installable - okej
 3. cache strategija - cache first - imamo neke pozadinske slike koje su spremljene u cache, ako nisu, server - koristen reactov template - automatski napravi precache od datoteka koje se naprave u buildu, a onda jos ceka zahtjeve za sve .jpg file-ove (osim pozadinske slike neba) i sprema ih u caches
 4. offline rad - pretvaranje slika u crnobijele ce radit i offline, jedino mozda pozadinske slike se nece loadati - moze se demonstrirati tako da se instalira aplikacija, otvori, ugasi internet te zatim ode na /ideas preko poveznice
-5. background sync - ako je korisnik probao dohvatiti pozadinske slike, ali je offline, slike ce se dohvatiti kada dobije konekciju i spremiti u cache
+5. background sync - ako korisnik pretvori sliku u crno bijelu, kasnije se na serveru incrementa broj pretvorbi
 6. push notifikacija - nakon sto se zavrsi bg sync
 7. progressive enhancement - ako korisnikov browser ne podrzava service workere, offline rad nece biti moguc ali ce normalno raditi online
