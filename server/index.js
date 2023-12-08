@@ -63,9 +63,7 @@ function(req, res) {
   let sub = req.body.subscription;
   subscriptions.push(sub);
   fs.writeFileSync(SUBS_FILENAME, JSON.stringify(subscriptions));
-  res.json({
-    success: true
-  });
+  res.sendStatus(200);
 });
 
 

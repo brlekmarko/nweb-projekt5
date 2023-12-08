@@ -7,7 +7,6 @@ import { precacheAndRoute, createHandlerBoundToURL } from 'workbox-precaching';
 import { registerRoute } from 'workbox-routing';
 import { CacheFirst, NetworkOnly } from 'workbox-strategies';
 import { BackgroundSyncPlugin } from 'workbox-background-sync';
-import axios from 'axios';
 
 declare const self: ServiceWorkerGlobalScope;
 
@@ -45,15 +44,6 @@ const imagesCacheStrategy = new CacheFirst({
   ],
 });
 
-// Cache strategy for background sync
-const bgSyncStrategy = new NetworkOnly({
-  plugins: [
-    new BackgroundSyncPlugin('incrementSyncQueue', {
-      maxRetentionTime: 24 * 60, // Retry for up to 24 hours
-    }),
-  ],
-});
-
 // Runtime caching route for .jpg files
 registerRoute(
   ({ url }) => (url.pathname.endsWith('.jpg') || url.pathname.endsWith('.jpeg')) && !url.pathname.endsWith('i.pinimg.com/originals/52/24/7f/52247f214662e5f9c23257292647e669.jpg'),
@@ -65,11 +55,13 @@ registerRoute(
 
 // background sync for incrementing the counter
 registerRoute(
-  ({ url }) => url.pathname.endsWith('/incrementNumberOfPictures'),
-  ({ event, request }) => {
-    // Use background sync strategy
-    return bgSyncStrategy.handle({ event, request });
-  }
+  ({ url, request }) => url.pathname.endsWith('/incrementNumberOfPictures') && request.method === 'POST',
+  new NetworkOnly({
+    plugins: [new BackgroundSyncPlugin('incrementSyncQueue', {
+      maxRetentionTime: 24 * 60, // Retry for up to 24 hours
+    }),]
+  }),
+  'POST'
 );
 
 // Background sync event listener

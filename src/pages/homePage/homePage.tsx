@@ -1,7 +1,6 @@
 import './homePage.css';
 import Webcam from "react-webcam";
 import { useCallback, useEffect, useRef, useState } from 'react';
-import axios from 'axios';
 
 
 const HomePage = () => {
@@ -16,7 +15,13 @@ const HomePage = () => {
             const imageSrc = (webcamRef.current as Webcam).getScreenshot() as string;
             setImageOriginal(imageSrc);
             transformImage(imageSrc);
-            axios.post("/incrementNumberOfPictures");
+            fetch("/incrementNumberOfPictures", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({}),
+            }).catch();
             setNumberOfPictures(numberOfPictures + 1);
         }
     }, [webcamRef, numberOfPictures]);
@@ -82,20 +87,27 @@ const HomePage = () => {
             if (sub === null) {
         
             // ask server for public key
-            let result = await axios.get("/publicVapidKey");
-            let vapidPublicKey = result.data.publicKey;
+            let result = await fetch("/publicVapidKey", {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+            });
+            let vapidPublicKey = await result.json();
         
             sub = await reg.pushManager.subscribe({
                 userVisibleOnly: true,
-                applicationServerKey: vapidPublicKey,
+                applicationServerKey: vapidPublicKey.publicVapidKey,
             });
-        
-            let subscription = await axios.post("/saveSubscription", { subscription: sub});
-        
-            if (subscription.data.success) {
-                console.log("Yay, subscription generated and saved:\n" +
-                JSON.stringify(sub));
-            }
+
+            let subscription = await fetch("/saveSubscription", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ subscription: sub }),
+            });
+            console.log("Subscription saved successfully");
         
             } else { 
             console.log("You are already subscribed"); 
@@ -106,9 +118,14 @@ const HomePage = () => {
     }
 
     useEffect(() => {
-        axios.get("/numberOfPictures").then(res => {
-            setNumberOfPictures(res.data.numOfPictures);
-        });
+        fetch("/numberOfPictures", {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json",
+                },
+                }).then(res => res.json()).then(res => {
+                    setNumberOfPictures(res.numOfPictures);
+                }).catch();
     }, []);
 
     return(
