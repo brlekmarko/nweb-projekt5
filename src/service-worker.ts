@@ -4,9 +4,10 @@
 import { clientsClaim } from 'workbox-core';
 import { ExpirationPlugin } from 'workbox-expiration';
 import { precacheAndRoute, createHandlerBoundToURL } from 'workbox-precaching';
-import { registerRoute, setCatchHandler } from 'workbox-routing';
+import { registerRoute } from 'workbox-routing';
 import { CacheFirst, NetworkOnly } from 'workbox-strategies';
 import { BackgroundSyncPlugin } from 'workbox-background-sync';
+import axios from 'axios';
 
 declare const self: ServiceWorkerGlobalScope;
 
@@ -47,7 +48,7 @@ const imagesCacheStrategy = new CacheFirst({
 // Cache strategy for background sync
 const bgSyncStrategy = new NetworkOnly({
   plugins: [
-    new BackgroundSyncPlugin('imageSyncQueue', {
+    new BackgroundSyncPlugin('incrementSyncQueue', {
       maxRetentionTime: 24 * 60, // Retry for up to 24 hours
     }),
   ],
@@ -57,25 +58,29 @@ const bgSyncStrategy = new NetworkOnly({
 registerRoute(
   ({ url }) => (url.pathname.endsWith('.jpg') || url.pathname.endsWith('.jpeg')) && !url.pathname.endsWith('i.pinimg.com/originals/52/24/7f/52247f214662e5f9c23257292647e669.jpg'),
   ({ event, request }) => {
-    // Use background sync strategy for offline requests
-    if (!navigator.onLine) {
-      return bgSyncStrategy.handle({ event, request });
-    }
-
-    // Use cache-first strategy for online requests
+    // Use cache-first strategy
     return imagesCacheStrategy.handle({ event, request });
+  }
+);
+
+// background sync for incrementing the counter
+registerRoute(
+  ({ url }) => url.pathname.endsWith('/incrementNumberOfPictures'),
+  ({ event, request }) => {
+    // Use background sync strategy
+    return bgSyncStrategy.handle({ event, request });
   }
 );
 
 // Background sync event listener
 self.addEventListener('sync', (event) => {
-  if (event.tag === 'imageSyncQueue') {
-    event.waitUntil(processImageSyncQueue());
+  if (event.tag === 'incrementSyncQueue') {
+    event.waitUntil(processIncrementSyncQueue());
   }
 });
 
 // Function to process the background sync queue
-async function processImageSyncQueue() {
+async function processIncrementSyncQueue() {
   const queue = await self.registration.sync.getTags();
 
   while (queue.length > 0) {
@@ -101,12 +106,28 @@ self.addEventListener('message', (event) => {
   }
 });
 
-// push notifications
 
 self.addEventListener('push', (event) => {
-  const title = 'Black n\' White Notification';
+  const notifData = event.data ? event.data.json() : undefined;
+  const title = event.data ? notifData.title : 'Black n\' White Notification';
   const options = {
-    body: event.data ? event.data.text() : 'New Notification',
+    body: event.data ? notifData.body : 'New Notification',
+    data: {
+      redirectUrl: event.data ? notifData.redirectUrl : "/",
+    },
   };
   event.waitUntil(self.registration.showNotification(title, options));
+});
+
+self.addEventListener("notificationclick", function (event) {
+  let notification = event.notification;
+  event.waitUntil(
+    self.clients.matchAll().then(function (clis) {
+      clis.forEach((client) => {
+        (client as WindowClient).navigate(notification.data.redirectUrl);
+        (client as WindowClient).focus();
+      });
+      notification.close();
+    })
+  );
 });

@@ -1,7 +1,7 @@
 import './homePage.css';
 import Webcam from "react-webcam";
-import { useCallback, useRef, useState } from 'react';
-import { transform } from 'typescript';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import axios from 'axios';
 
 
 const HomePage = () => {
@@ -9,14 +9,17 @@ const HomePage = () => {
     const webcamRef = useRef<Webcam | null>(null);
     const [imageOriginal, setImageOriginal] = useState<string | null>(null);
     const [imageTransformed, setImageTransformed] = useState<string | null>(null);
+    const [numberOfPictures, setNumberOfPictures] = useState<number>(0);
 
     const capture = useCallback(() => {
         if (webcamRef.current) {
             const imageSrc = (webcamRef.current as Webcam).getScreenshot() as string;
             setImageOriginal(imageSrc);
             transformImage(imageSrc);
+            axios.post("/incrementNumberOfPictures");
+            setNumberOfPictures(numberOfPictures + 1);
         }
-    }, [webcamRef]);
+    }, [webcamRef, numberOfPictures]);
 
     const transformImage = (imageSrc: string) => {
         // adds a black and white filter to the image
@@ -57,11 +60,64 @@ const HomePage = () => {
         document.body.removeChild(link);
     }
 
+    async function askForNotificationPermission() {
+        // push notifications
+        if ("Notification" in window && "serviceWorker" in navigator) {
+            Notification.requestPermission(async function(res) {
+            if (res === 'granted') {
+                console.log('Notification permission granted.');
+                setupPushSubscription();
+            } else {
+                console.log('Unable to get permission to notify.');
+            }
+            });
+        }
+    }
+        
+    async function setupPushSubscription() {
+        try{
+            let reg= await navigator.serviceWorker.ready;
+            let sub= await reg.pushManager.getSubscription();
+        
+            if (sub === null) {
+        
+            // ask server for public key
+            let result = await axios.get("/publicVapidKey");
+            let vapidPublicKey = result.data.publicKey;
+        
+            sub = await reg.pushManager.subscribe({
+                userVisibleOnly: true,
+                applicationServerKey: vapidPublicKey,
+            });
+        
+            let subscription = await axios.post("/saveSubscription", { subscription: sub});
+        
+            if (subscription.data.success) {
+                console.log("Yay, subscription generated and saved:\n" +
+                JSON.stringify(sub));
+            }
+        
+            } else { 
+            console.log("You are already subscribed"); 
+            }
+        } catch (error) {
+            console.log(error);
+        }
+    }
+
+    useEffect(() => {
+        axios.get("/numberOfPictures").then(res => {
+            setNumberOfPictures(res.data.numOfPictures);
+        });
+    }, []);
+
     return(
         <div>
             <div className="text-center">
                 <h1 style={{textAlign: 'center'}}>Take a picture using your camera and it will be transformed using the black and white filter</h1>
                 <h1 style={{textAlign: 'center'}}>You can get some cool ideas from <a href="/ideas">here</a></h1>
+                <h2 style={{textAlign: 'center'}}>Number of pictures taken globally: {numberOfPictures}</h2>
+                <h2 style={{textAlign: 'center'}}>Subscribe to notifications to get notified when someone takes a picture <button className="button" onClick={askForNotificationPermission}>Subscribe</button></h2>
             </div>
             <div className='bothImages'>
 
