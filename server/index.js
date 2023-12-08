@@ -3,18 +3,12 @@ const app = express(); // create express app
 const path = require("path");
 const webpush = require('web-push');
 const fs = require('fs');
+const bodyParser = require('body-parser');
 
 let numOfPictures = 0;
 let subscriptions = [];
 const SUBS_FILENAME = 'subscriptions.json';
 
-
-try{
-  subscriptions = JSON.parse(fs.readFileSync(SUBS_FILENAME));
-}
-catch(e){
-  console.log(e);
-}
 
 const vapidKeys = webpush.generateVAPIDKeys();
 
@@ -64,8 +58,9 @@ app.get("/publicVapidKey", function(req, res) {
 }
 );
 
-app.post("/saveSubscription", function(req, res) {
-  let sub = req.body.sub;
+app.post("/saveSubscription", bodyParser.json(),
+function(req, res) {
+  let sub = req.body.subscription;
   subscriptions.push(sub);
   fs.writeFileSync(SUBS_FILENAME, JSON.stringify(subscriptions));
   res.json({
@@ -88,3 +83,4 @@ app.listen(5000, () => {
   console.log("server started on port 5000");
   sendPushNotifications(numOfPictures);
 });
+

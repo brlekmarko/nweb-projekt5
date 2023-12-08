@@ -107,76 +107,27 @@ self.addEventListener('message', (event) => {
 });
 
 
-export async function askForNotificationPermission() {
-  // push notifications
-  if ("Notification" in window && "serviceWorker" in navigator) {
-    Notification.requestPermission(async function(res) {
-      if (res === 'granted') {
-        console.log('Notification permission granted.');
-        setupPushSubscription();
-      } else {
-        console.log('Unable to get permission to notify.');
-      }
-    });
-  }
-}
-
-async function setupPushSubscription() {
-  try{
-    let reg= await navigator.serviceWorker.ready;
-    let sub= await reg.pushManager.getSubscription();
-
-    if (sub === null) {
-
-      // ask server for public key
-      let result = await axios.get("/publicVapidKey");
-      let vapidPublicKey = result.data.publicKey;
-
-      sub = await reg.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: vapidPublicKey,
-      });
-
-      let res = await fetch("/saveSubscription", {
-        method: "POST", headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-        }, body: JSON.stringify({ sub }),
-      });
-
-    if (res.ok) {
-    console.log("Yay, subscription generated and saved:\n" +
-    JSON.stringify(sub));
-    }
-
-    } else { 
-      console.log("You are already subscribed"); 
-    }
-  } catch (error) {
-    console.log(error);
-  }
-}
-
 self.addEventListener('push', (event) => {
-  const title = 'Black n\' White Notification';
+  const notifData = event.data ? event.data.json() : undefined;
+  const title = event.data ? notifData.title : 'Black n\' White Notification';
   const options = {
-    body: event.data ? event.data.text() : 'New Notification',
+    body: event.data ? notifData.body : 'New Notification',
     data: {
-      redirectUrl: event.data ? (event.data as any).redirectUrl : "/",
+      redirectUrl: event.data ? notifData.redirectUrl : "/",
     },
   };
   event.waitUntil(self.registration.showNotification(title, options));
 });
 
-// self.addEventListener("notificationclick", function (event) {
-//   let notification = event.notification;
-//   event.waitUntil(
-//     self.clients.matchAll().then(function (clis) {
-//       clis.forEach((client) => {
-//         (client as WindowClient).navigate(notification.data.redirectUrl);
-//         (client as WindowClient).focus();
-//       });
-//       notification.close();
-//     })
-//   );
-// });
+self.addEventListener("notificationclick", function (event) {
+  let notification = event.notification;
+  event.waitUntil(
+    self.clients.matchAll().then(function (clis) {
+      clis.forEach((client) => {
+        (client as WindowClient).navigate(notification.data.redirectUrl);
+        (client as WindowClient).focus();
+      });
+      notification.close();
+    })
+  );
+});
