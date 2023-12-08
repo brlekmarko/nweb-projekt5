@@ -5,3 +5,9 @@
     flex-wrap: nowrap;
     margin: 10px;
 }
+
+@media screen and (max-width: 1000px){
+    .ideas div{
+        flex-direction: column;
+    }
+}
